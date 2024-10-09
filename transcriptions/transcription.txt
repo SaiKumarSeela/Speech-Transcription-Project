@@ -1,0 +1,8 @@
+speaker1: hi
+speaker2: hello
+speaker1: bye
+speaker2: ok bye
+speaker1: hi
+speaker2: hello
+speaker1: bye
+speaker2: ok bye

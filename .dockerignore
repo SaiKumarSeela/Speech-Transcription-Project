@@ -1,0 +1,13 @@
+.env
+logs
+Samples/
+YoutubeAudios/
+chunk1.wav
+chunk2.wav
+notes.txt
+notess.txt
+output.csv
+practice.py
+summmary.csv
+transcript.txt
+uploaded_audio.wav

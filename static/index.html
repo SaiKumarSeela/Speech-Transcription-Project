@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Transcription and Speaker Diarization</title>
+    <style>
+         :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --background-color: #f4f4f4;
+            --text-color: #333;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1,
+        h2 {
+            color: var(--secondary-color);
+        }
+        
+        .content-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .column {
+            flex: 1;
+            min-width: 300px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .transcript-line {
+            border-bottom: 1px solid #e6e6e6;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        .button:hover {
+            background-color: #2980b9;
+        }
+        
+        #file-upload {
+            display: none;
+        }
+        
+        .file-upload-label {
+            border: 1px solid #ccc;
+            display: inline-block;
+            padding: 6px 12px;
+            cursor: pointer;
+            background-color: white;
+            border-radius: 4px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th,
+        td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
+        
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .status-updates {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e6e6e6;
+            border-radius: 4px;
+            height: 150px;
+            overflow-y: auto;
+        }
+        
+        .status-item {
+            margin-bottom: 5px;
+        }
+        
+        .status-item.completed {
+            color: green;
+        }
+        
+        .loading-bar-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        
+        .loading-bar {
+            height: 20px;
+            width: 0;
+            background-color: var(--primary-color);
+            border-radius: 4px;
+            text-align: center;
+            color: white;
+            line-height: 20px;
+            transition: width 0.3s ease-in-out;
+        }
+        
+        @media (max-width: 768px) {
+            .content-wrapper {
+                flex-direction: column;
+            }
+            .column {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Audio Transcription and Speaker Diarization</h1>
+
+        <input type="file" id="file-upload" accept=".wav,.mp3" />
+        <label for="file-upload" class="file-upload-label">Choose an audio file</label>
+        <button id="upload-btn" class="button">Upload and Process</button>
+        <div id="uploadMessage" style="color: green;"></div>
+
+        <div class="status-updates" id="statusUpdates"></div>
+        <div class="loading-bar-container">
+            <div id="loadingBar" class="loading-bar">0%</div>
+        </div>
+
+        <div class="loader" id="loader"></div>
+
+        <div class="content-wrapper">
+            <div class="column">
+                <h2>Transcription</h2>
+                <div id="transcription"></div>
+            </div>
+            <div class="column">
+                <h2>Results</h2>
+                <div id="tabs">
+                    <button class="button" onclick="showTab('summary')">Summary</button>
+                    <button class="button" onclick="showTab('stats')">Stats</button>
+                </div>
+                <div id="tab-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadBtn = document.getElementById('upload-btn');
+        const fileUpload = document.getElementById('file-upload');
+        const transcriptionDiv = document.getElementById('transcription');
+        const tabContent = document.getElementById('tab-content');
+        const loader = document.getElementById('loader');
+        const statusUpdates = document.getElementById('statusUpdates');
+        const uploadMessage = document.getElementById('uploadMessage');
+        const loadingBar = document.getElementById('loadingBar');
+
+        const totalSteps = 4; // Total number of processing steps
+        let completedSteps = 0;
+
+        uploadBtn.addEventListener('click', async() => {
+            const file = fileUpload.files[0];
+            if (!file) {
+                alert('Please select a file first.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                loader.style.display = 'block';
+                uploadBtn.disabled = true;
+                statusUpdates.innerHTML = '';
+                loadingBar.style.width = '0%';
+                loadingBar.textContent = '0%';
+                completedSteps = 0;
+                uploadMessage.innerHTML = '';
+
+                // Send the file using a POST request
+                const response = await fetch('/transcribe/', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const {
+                        done,
+                        value
+                    } = await reader.read();
+                    if (done) break;
+
+                    const decodedChunk = decoder.decode(value, {
+                        stream: true
+                    });
+                    const lines = decodedChunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const statusMessage = line.slice(6);
+                            updateStatus(statusMessage);
+                        }
+                    }
+                }
+
+                // Fetch and display transcription after processing is complete
+                const transcriptionResponse = await fetch('/transcription/');
+                if (!transcriptionResponse.ok) {
+                    throw new Error('Failed to fetch transcription');
+                }
+
+                const transcriptionData = await transcriptionResponse.json();
+                displayTranscription(transcriptionData.conversation);
+
+                loader.style.display = 'none';
+                uploadBtn.disabled = false;
+                uploadMessage.textContent = 'Processing complete!';
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while processing the audio file.');
+                loader.style.display = 'none';
+                uploadBtn.disabled = false;
+            }
+        });
+
+        function updateStatus(statusMessage) {
+            const statusItem = document.createElement('div');
+            statusItem.className = 'status-item';
+            statusItem.textContent = statusMessage;
+
+            if (statusMessage.includes('completed') || statusMessage.includes('complete')) {
+                statusItem.classList.add('completed');
+                completedSteps++;
+                updateLoadingBar();
+            }
+
+            statusUpdates.appendChild(statusItem);
+            statusUpdates.scrollTop = statusUpdates.scrollHeight;
+        }
+
+        function updateLoadingBar() {
+            const percentage = Math.min((completedSteps / totalSteps) * 100, 100);
+            loadingBar.style.width = `${percentage}%`;
+            loadingBar.textContent = `${Math.round(percentage)}%`; // Show percentage inside the bar
+        }
+
+        function displayTranscription(conversation) {
+            transcriptionDiv.innerHTML = conversation.map(entry =>
+                `<div class="transcript-line">${entry}</div>`
+            ).join('');
+        }
+
+        async function showTab(tabName) {
+            let content = '';
+            try {
+                if (tabName === 'summary') {
+                    const response = await fetch('/summary/');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    content = displaySummary(data);
+                } else if (tabName === 'stats') {
+                    const response = await fetch('/stats/');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    content = displayStats(data);
+                }
+                tabContent.innerHTML = content;
+            } catch (error) {
+                console.error(`Error fetching ${tabName}:`, error);
+                tabContent.innerHTML = `<p>Failed to fetch ${tabName}. Error: ${error.message}</p>`;
+            }
+        }
+
+        function displaySummary(summaryData) {
+            if (summaryData.error) {
+                return `<p>${summaryData.error}</p>`;
+            }
+            return `
+                <table>
+                    <tr>
+                        <th>Speaker</th>
+                        <th>Summary</th>
+                    </tr>
+                    ${summaryData.Speaker.map((speaker, index) => `
+                        <tr>
+                            <td>${speaker}</td>
+                            <td>${summaryData.Summary[index]}</td>
+                        </tr>
+                    `).join('')}
+                </table>
+            `;
+        }
+
+        function displayStats(data) {
+            if (data.error) {
+                return `<p>${data.error}</p>`;
+            }
+            const speakerStats = Object.entries(data.words_by_speaker)
+                .map(([speaker, count]) => `<tr><td>Words by ${speaker}</td><td>${count}</td></tr>`)
+                .join('');
+
+            return `
+                <table>
+                    <tr><td>Audio Duration (m)</td><td>${data.audio_duration.toFixed(2)}</td></tr>
+                    <tr><td>Total Words</td><td>${data.total_words}</td></tr>
+                    ${speakerStats}
+                </table>
+            `;
+        }
+    </script>
+</body>
+
+</html>
