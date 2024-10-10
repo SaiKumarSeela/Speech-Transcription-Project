@@ -1,0 +1,72 @@
+Public IP: 3.86.27.236
+
+
+
+-------------------
+sudo yum -y intall httpd
+ sudo apt-get update
+ sudo apt-get install -y jq unzip
+sudo apt install python3 python3-pip git nginx -y
+
+git clone https://github.com/SaiKumarSeela/Speech-Transcription-Project.git
+cd Speech-Transcription-Project
+
+------------
+# Install virtualenv if you don't have it already
+sudo apt install python3-venv
+
+# Create a virtual environment in the current directory
+python3 -m venv env
+
+# Activate the virtual environment
+
+source env/bin/activate
+----------
+
+pip install -r requirements.txt
+
+sudo apt install ffmpeg
+
+
+nano /home/ubuntu/Speech-Transcription-Project/.env
+(paste the credentials )
+next run applicatin: "uvicorn main:app --host 0.0.0.0 --port 8000"
+ubuntu@3.86.27.236
+---------------
+http://<your-ec2-public-ip>:8000/docs
+
+--------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Check Security Group Settings (If Not Accessible)
+If the website is not accessible, you might need to ensure that the correct port (8000 in this case) is open in your EC2 Security Group.
+
+Go to AWS Management Console:
+
+Navigate to EC2 > Instances, find your instance, and click on Security Groups.
+Edit Inbound Rules:
+
+Click on the associated Security Group.
+Go to the Inbound Rules tab, and click Edit Inbound Rules.
+Add a rule that allows HTTP traffic on port 8000:
+Type: Custom TCP Rule
+Protocol: TCP
+Port Range: 8000
+Source: Anywhere (or your IP address for more security)
+Save Changes and try accessing the website again.
+
+---------
+sudo apt update
+sudo apt upgrade -y
+sudo apt install python3 python3-pip git -y

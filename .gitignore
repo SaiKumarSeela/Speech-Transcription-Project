@@ -15,6 +15,8 @@ chunk2.wav
 uploaded_audio.wav
 speechtranscript1/
 test_files/
+ai_module_ssh.pem
+speech_connect_ec2.ppk
 
 
 # C extensions
