@@ -35,18 +35,26 @@ class WhisperTranscriber:
     
     def load_model(self):
         import whisperx
-        logging.info("Load the Whisper model.")
+        logging.info("Loading the Whisper model.")
         
-        model_path = "whisper_model"
-        
-        # Check if the model directory exists and contains necessary files
-        if os.path.exists(model_path) and os.path.isfile(os.path.join(model_path, 'model.bin')):
-            try:
-                self.model = whisperx.load_model(model_path, self.device, compute_type=self.compute_type)
+        # Define the model path where the required files are located
+        # Define the relative path to the model files
+        current_directory = os.getcwd()
+        model_path =os.path.join(current_directory,"whisper_model","snapshots","f0fe81560cb8b68660e564f55dd99207059c092e")
 
+        # Construct the full model path
+        # model_path = os.path.join(current_directory, relative_model_path)
+        # Specify the required files for loading the model
+        required_files = ['model.bin', 'config.json', 'tokenizer.json']  # Add other required files if necessary
+        model_files_exist = all(os.path.isfile(os.path.join(model_path, file)) for file in required_files)
+
+        if os.path.exists(model_path) and model_files_exist:
+            try:
+                # Load the model from the local directory
+                self.model = whisperx.load_model(model_path, self.device, compute_type=self.compute_type)
                 logging.info("Model loaded successfully from local directory.")
             except Exception as e:
-                logging.info(f"Error loading model from local directory: {e}")
+                logging.error(f"Error loading model from local directory: {e}")
         else:
             logging.info("Model not found locally. Downloading...")
             os.makedirs(model_path, exist_ok=True)
@@ -55,7 +63,7 @@ class WhisperTranscriber:
                 self.model = whisperx.load_model("large-v2", self.device, compute_type=self.compute_type, download_root=model_path)
                 logging.info("Model downloaded and saved successfully.")
             except Exception as e:
-                logging.info(f"Error downloading the model: {e}")
+                logging.error(f"Error downloading the model: {e}")
 
     def transcribe_audio(self):
         import whisperx

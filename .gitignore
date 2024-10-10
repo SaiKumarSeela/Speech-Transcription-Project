@@ -17,7 +17,8 @@ speechtranscript1/
 test_files/
 ai_module_ssh.pem
 speech_connect_ec2.ppk
-
+env.list
+whisper_model_compressed.zip
 
 # C extensions
 *.so
