@@ -40,7 +40,8 @@ class WhisperTranscriber:
         # Define the model path where the required files are located
         # Define the relative path to the model files
         current_directory = os.getcwd()
-        model_path =os.path.join(current_directory,"distil-whisper_model","snapshots","fe9b404fc56de3f7c38606ef9ba6fd83526d05e4")
+        model_dir = "distil_whisper_model"
+        model_path =os.path.join(current_directory,"distil_whisper_model","models--Systran--faster-distil-whisper-large-v2","snapshots","fe9b404fc56de3f7c38606ef9ba6fd83526d05e4")
 
         # Construct the full model path
         # model_path = os.path.join(current_directory, relative_model_path)
@@ -48,7 +49,7 @@ class WhisperTranscriber:
         required_files = ['model.bin', 'config.json', 'tokenizer.json']  # Add other required files if necessary
         model_files_exist = all(os.path.isfile(os.path.join(model_path, file)) for file in required_files)
 
-        if os.path.exists(model_path) and model_files_exist:
+        if os.path.exists(model_dir) and model_files_exist:
             try:
                 # Load the model from the local directory
                 self.model = whisperx.load_model(model_path, self.device, compute_type=self.compute_type)
@@ -57,10 +58,10 @@ class WhisperTranscriber:
                 logging.error(f"Error loading model from local directory: {e}")
         else:
             logging.info("Model not found locally. Downloading...")
-            os.makedirs(model_path, exist_ok=True)
+            os.makedirs(model_dir, exist_ok=True)
             try:
                 # Downloading and saving the model in specified path
-                self.model = whisperx.load_model("distil-large-v2", self.device, compute_type=self.compute_type, download_root=model_path)
+                self.model = whisperx.load_model("distil-large-v2", self.device, compute_type=self.compute_type, download_root=model_dir)
                 logging.info("Model downloaded and saved successfully.")
             except Exception as e:
                 logging.error(f"Error downloading the model: {e}")

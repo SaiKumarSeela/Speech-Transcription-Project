@@ -36,7 +36,7 @@ jobs:
 
           # Install Apache HTTP Server
           sudo yum -y install httpd
-
+          #public ip 54.165.50.179
           # Clone the repository
           cd /home/ubuntu
           rm -rf Speech-Transcription-Project
@@ -56,13 +56,13 @@ jobs:
           # Install ffmpeg
           sudo apt install ffmpeg -y
 
-          # Create "distil-whisper_model" folder
-          mkdir -p distil-whisper_model
+          # Create "distil_whisper_model" folder
+          mkdir -p distil_whisper_model/models--Systran--faster-distil-whisper-large-v2
 
           # Sync model from S3
-          aws s3 sync s3://${{ secrets.BUCKET_NAME }}/models--Systran--faster-distil-whisper-large-v2 distil-whisper_model/
+          aws s3 sync s3://${{ secrets.BUCKET_NAME }}/models--Systran--faster-distil-whisper-large-v2 distil_whisper_model/models--Systran--faster-distil-whisper-large-v2
 
-          # aws s3 sync s3://focus-transcribe/models--Systran--faster-distil-whisper-large-v2 distil-whisper_model/
+          # aws s3 sync s3://focus-transcribe/models--Systran--faster-distil-whisper-large-v2 distil_whisper_model/models--Systran--faster-distil-whisper-large-v2
 
           # Set environment variables (from GitHub Actions secrets)
           echo "HUGGINGFACEHUB_API_TOKEN=${{ secrets.HUGGINGFACEHUB_API_TOKEN }}" >> .env

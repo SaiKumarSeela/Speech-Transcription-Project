@@ -9,6 +9,7 @@ notes.txt
 Samples/
 YoutubeAudios/
 practise.py
+distil_whisper_model/
 whisper_model/
 chunk1.wav
 chunk2.wav
