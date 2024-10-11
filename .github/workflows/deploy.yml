@@ -28,6 +28,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y jq unzip awscli
           sudo apt install python3 python3-pip git nginx -y
+           sudo apt-get update
+          sudo apt-get install -y unzip
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
 
           # Install Apache HTTP Server
           sudo yum -y install httpd
@@ -51,11 +56,13 @@ jobs:
           # Install ffmpeg
           sudo apt install ffmpeg -y
 
-          # Create "whisper_model" folder
-          mkdir -p whisper_model
+          # Create "distil-whisper_model" folder
+          mkdir -p distil-whisper_model
 
           # Sync model from S3
-          aws s3 sync s3://${{ secrets.BUCKET_NAME}}/models--Systran--faster-whisper-large-v2 whisper_model/
+          aws s3 sync s3://${{ secrets.BUCKET_NAME }}/models--Systran--faster-distil-whisper-large-v2 distil-whisper_model/
+
+          # aws s3 sync s3://focus-transcribe/models--Systran--faster-distil-whisper-large-v2 distil-whisper_model/
 
           # Set environment variables (from GitHub Actions secrets)
           echo "HUGGINGFACEHUB_API_TOKEN=${{ secrets.HUGGINGFACEHUB_API_TOKEN }}" >> .env
@@ -63,6 +70,7 @@ jobs:
           echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
           echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env
+          echo "DEVICE"=${{ secrets.DEVICE }}" >> .env
 
           # Start the FastAPI app using Uvicorn
           nohup uvicorn main:app --host 0.0.0.0 --port 8000 &

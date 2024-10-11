@@ -22,6 +22,7 @@ groq_api_key = os.getenv("GROQ_API_KEY")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_REGION = os.getenv("AWS_REGION")
+DEVICE = os.getenv("DEVICE")
 TRAINING_BUCKET_NAME = "focus-transcribe"
 timestamp = datetime.now()
 timestamp = timestamp.strftime("%m_%d_%y_%H_%M_%S")
@@ -57,7 +58,7 @@ async def read_root():
     return FileResponse('static/index.html')
 
 async def process_audio(file_path: str):
-    transcriber = WhisperTranscriber(file_path, huggingface_token)
+    transcriber = WhisperTranscriber(file_path, huggingface_token, device= DEVICE)
 
     yield "data: Loading model...\n"
     transcriber.load_model()
