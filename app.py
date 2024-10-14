@@ -5,13 +5,24 @@ from src.logger import logging
 from src.dairization import WhisperTranscriber
 from dotenv import load_dotenv
 from src.summarization import summarise_transcript
-from src.utils import extract_audio_duration, count_words, display_conversation, extract_speaker_texts
+from src.utils import extract_audio_duration, count_words, display_conversation, extract_speaker_texts, save_transcription
+from datetime import datetime
+from src.constants import BUCKET_NAME
+from src.s3_syncer import S3Sync
 import pandas as pd
 
 load_dotenv()
 
 huggingface_token = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 groq_api_key = os.getenv("GROQ_API_KEY")
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_REGION = os.getenv("AWS_REGION")
+DEVICE = os.getenv("DEVICE")
+
+timestamp = datetime.now()
+timestamp = timestamp.strftime("%m_%d_%y_%H_%M_%S")
+s3_sync = S3Sync(AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_REGION)
 
 def show_transcription(conversation):
     st.subheader("Transcription")
@@ -111,14 +122,18 @@ def main(huggingface_token,groq_api_key):
             # Save results to JSON
             transcriber.save_to_json(final_result)
             conversation = display_conversation(filename='data.json', uniq_speakers=uniq_speakers)
+
+            directory_path = save_transcription(conversation=conversation)
+            s3_sync.sync_folder_to_s3(folder = directory_path,aws_bucket_name=BUCKET_NAME)
+            logging.info("Succesfully transcriptions are saved to s3 bucket")
             speaker_texts = extract_speaker_texts(conversation)
             print(speaker_texts)
             individual_summary = {}
             for speaker, speeches in speaker_texts.items():
-                individual_summary[speaker] = summarise_transcript(groq_api_key=groq_api_key, mp3file_path="uploaded_audio.wav", transcript=speeches)
+                individual_summary[speaker] = summarise_transcript(groq_api_key=groq_api_key, transcript=speeches)
                 
             print(individual_summary)
-            summary_content = summarise_transcript(groq_api_key=groq_api_key, mp3file_path="uploaded_audio.wav", transcript=conversation)
+            summary_content = summarise_transcript(groq_api_key=groq_api_key, transcript=conversation)
             
             # Create a DataFrame for displaying summaries
             summary_data = {

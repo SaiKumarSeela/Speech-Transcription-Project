@@ -4,7 +4,7 @@ from langchain_core.prompts import ChatPromptTemplate
 import os
 from dotenv import load_dotenv
 import assemblyai as aai
-
+from src.constants import SUMMARIZATION_MODEL
 load_dotenv()
 
 # assembly_api_key = os.getenv("ASSEMBLYAI_API_KEY")
@@ -20,7 +20,7 @@ def summarise_transcript(groq_api_key,transcript):
 
     llm = ChatGroq(
     groq_api_key=groq_api_key,
-    model_name="Llama3-8b-8192"
+    model_name= SUMMARIZATION_MODEL
     )
     # Prepare the prompt for summarization
     summarise_prompt = f""" Summarise the following transcript delimited by 3 backticks without any introductory phrases: {transcript} """

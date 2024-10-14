@@ -12,6 +12,7 @@ from src.summarization import summarise_transcript
 from src.utils import extract_audio_duration, count_words, display_conversation, extract_speaker_texts, save_transcription
 from src.s3_syncer import S3Sync
 from datetime import datetime
+from src.constants import BUCKET_NAME
 import pandas as pd
 from typing import List, Dict
 
@@ -23,7 +24,7 @@ AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_REGION = os.getenv("AWS_REGION")
 DEVICE = os.getenv("DEVICE")
-TRAINING_BUCKET_NAME = "focus-transcribe"
+
 timestamp = datetime.now()
 timestamp = timestamp.strftime("%m_%d_%y_%H_%M_%S")
 s3_sync = S3Sync(AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_REGION)
@@ -81,8 +82,8 @@ async def process_audio(file_path: str):
     speaker_texts = extract_speaker_texts(conversation)
 
     directory_path = save_transcription(conversation=conversation)
-    aws_bucket_url = f"s3://{TRAINING_BUCKET_NAME}/transcription/{timestamp}"
-    s3_sync.sync_folder_to_s3(folder = directory_path,aws_bucket_name=TRAINING_BUCKET_NAME)
+    aws_bucket_url = f"s3://{BUCKET_NAME}/transcription/{timestamp}"
+    s3_sync.sync_folder_to_s3(folder = directory_path,aws_bucket_name=BUCKET_NAME)
     logging.info("Succesfully transcriptions are saved to s3 bucket")
 
 

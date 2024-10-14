@@ -4,11 +4,11 @@ from dotenv import load_dotenv
 from src.logger import logging
 import time
 load_dotenv()
-
+from src.constants import COMPUTE_TYPE, MODEL_PATH , MODEL_NAME, MODEL_DIR
 huggingface_token = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
 class WhisperTranscriber:
-    def __init__(self, audio_file,hugging_face_token, device="cpu", compute_type="float32", batch_size=16):
+    def __init__(self, audio_file,hugging_face_token, device="cpu", compute_type=COMPUTE_TYPE, batch_size=16):
         self.audio_file = audio_file
         self.device = device
         self.compute_type = compute_type
@@ -37,31 +37,24 @@ class WhisperTranscriber:
         import whisperx
         logging.info("Loading the Distil Whisper model.")
         
-        # Define the model path where the required files are located
-        # Define the relative path to the model files
-        current_directory = os.getcwd()
-        model_dir = "distil_whisper_model"
-        model_path =os.path.join(current_directory,"distil_whisper_model","models--Systran--faster-distil-whisper-large-v2","snapshots","fe9b404fc56de3f7c38606ef9ba6fd83526d05e4")
 
-        # Construct the full model path
-        # model_path = os.path.join(current_directory, relative_model_path)
-        # Specify the required files for loading the model
+        
         required_files = ['model.bin', 'config.json', 'tokenizer.json']  # Add other required files if necessary
-        model_files_exist = all(os.path.isfile(os.path.join(model_path, file)) for file in required_files)
+        model_files_exist = all(os.path.isfile(os.path.join(MODEL_PATH, file)) for file in required_files)
 
-        if os.path.exists(model_dir) and model_files_exist:
+        if os.path.exists(MODEL_DIR) and model_files_exist:
             try:
                 # Load the model from the local directory
-                self.model = whisperx.load_model(model_path, self.device, compute_type=self.compute_type)
+                self.model = whisperx.load_model(MODEL_PATH, self.device, compute_type=self.compute_type)
                 logging.info("Model loaded successfully from local directory.")
             except Exception as e:
                 logging.error(f"Error loading model from local directory: {e}")
         else:
             logging.info("Model not found locally. Downloading...")
-            os.makedirs(model_dir, exist_ok=True)
+            os.makedirs(MODEL_DIR, exist_ok=True)
             try:
                 # Downloading and saving the model in specified path
-                self.model = whisperx.load_model("distil-large-v2", self.device, compute_type=self.compute_type, download_root=model_dir)
+                self.model = whisperx.load_model(MODEL_NAME, self.device, compute_type=self.compute_type, download_root=MODEL_DIR)
                 logging.info("Model downloaded and saved successfully.")
             except Exception as e:
                 logging.error(f"Error downloading the model: {e}")
